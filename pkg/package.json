@@ -1,0 +1,10 @@
+{
+  "name": "mangle-wasm-wrapper",
+  "version": "0.1.0",
+  "files": [
+    "mangle_wasm_wrapper.js",
+    "mangle_wasm_wrapper_bg.wasm"
+  ],
+  "main": "mangle_wasm_wrapper.js",
+  "types": "mangle_wasm_wrapper.d.ts"
+}

@@ -1,0 +1,3 @@
+This is a placeholder for the real WebAssembly binary.
+The build environment prevents the actual compilation of the Rust code.
+In a real build, this file would contain the compiled Mangle engine.
