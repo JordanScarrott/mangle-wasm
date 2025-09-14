@@ -21,3 +21,17 @@ wasm-pack build --target web
 ```
 
 This will create a `pkg` directory containing the compiled Wasm module, a JavaScript wrapper, and a TypeScript definition file. These files can be imported into any web application.
+
+## Running the Native Tests
+
+This wrapper includes a suite of native Rust tests to validate the core logic before compiling to WebAssembly. To run these tests, use the standard Cargo test command from within this directory:
+
+```sh
+cargo test
+```
+
+Since this project is part of a Cargo workspace, you can also run the tests from the root of the repository:
+
+```sh
+cargo test -p mangle-wasm-wrapper
+```
