@@ -116,7 +116,7 @@ where
         Self { sc: scan::Scanner::new(reader, path), token: token::Token::Illegal, arena }
     }
 
-    fn next_token(&mut self) -> Result<()> {
+    pub fn next_token(&mut self) -> Result<()> {
         self.token = self.sc.next_token()?;
         Ok(())
     }

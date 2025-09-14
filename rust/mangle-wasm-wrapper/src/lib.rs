@@ -49,7 +49,7 @@ fn run_query_internal(input: &str) -> Result<Vec<String>, String> {
     }
 
     // 4. Build Schema and Store
-    let mut schema = TableStoreSchema::new();
+    let mut schema = HashMap::default();
     for clause in clauses {
         schema.entry(clause.head.sym).or_insert(TableConfig::InMemory);
         for premise in clause.premises {

@@ -20,7 +20,7 @@ use mangle_factstore as factstore;
 
 use analysis::StratifiedProgram;
 
-mod naive;
+pub mod naive;
 
 pub trait Engine<'e> {
     fn eval<'p>(
