@@ -1,14 +1,17 @@
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use fxhash::FxHashSet;
+
 
 // Mangle crates
 use mangle_ast as ast;
 use mangle_engine::Engine;
-use mangle_factstore::{FactStore, ReadOnlyFactStore, TableConfig, TableStoreImpl, TableStoreSchema};
+use mangle_factstore::{FactStore, ReadOnlyFactStore, TableConfig, TableStoreImpl};
 use mangle_analysis::SimpleProgram;
 use mangle_parse::Parser;
+
 
 #[derive(Serialize)]
 struct SuccessResponse {
@@ -95,7 +98,7 @@ fn run_query_internal(input: &str) -> Result<Vec<String>, String> {
 
     // 7. Querying and Formatting
     let results = RefCell::new(Vec::new());
-    store.get(query_atom.sym, query_atom.args, &|atom| {
+    store.get(query_atom.sym, query_atom.args, &|atom: &ast::Atom| {
         results.borrow_mut().push(atom.to_string());
         Ok(())
     }).map_err(|e| format!("Query error: {}", e))?;
