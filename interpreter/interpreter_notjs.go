@@ -1,5 +1,5 @@
-//go:build js && wasm
-// +build js,wasm
+//go:build !js
+// +build !js
 
 // Copyright 2022 Google LLC
 //
@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/chzyer/readline"
 	"github.com/google/mangle/analysis"
 	"github.com/google/mangle/ast"
 	"github.com/google/mangle/engine"
@@ -83,9 +84,28 @@ func (i *Interpreter) AddPostProcessor(postProcessor func(store factstore.FactSt
 }
 
 const (
+	normalPrompt    = "mg >"
+	continuedPrompt = ".. >"
 	interactivePath = "interactive-buffer"
 	preloadPathset  = "interactive-preload"
 )
+
+func nextLine() (string, error) {
+	return nextLineWithPrompt(normalPrompt)
+}
+
+func nextLineWithPrompt(prompt string) (string, error) {
+	rl, err := readline.New(prompt)
+	if err != nil {
+		return "", err
+	}
+	line, err := rl.Readline()
+	if err != nil {
+		return "", err
+	}
+	readline.AddHistory(line)
+	return strings.TrimSpace(line), nil
+}
 
 func (i *Interpreter) showPredicate(p ast.PredicateSym) {
 	const docStringMargin = 50
@@ -296,6 +316,55 @@ func (i *Interpreter) ShowHelp() {
 ::show <predicate> shows information about predicate
 ::show all         shows information about all available predicates
 <Ctrl-D>           quit`)
+}
+
+// Loop reads lines from stdin and performs the commands.
+func (i *Interpreter) Loop() error {
+	i.ShowHelp()
+	for {
+		line, err := nextLine()
+		if err != nil {
+			return err
+		}
+		switch {
+		case line == "::help":
+			i.ShowHelp()
+
+		case strings.HasPrefix(line, "::load "):
+			if err := i.Load(strings.TrimPrefix(line, "::load ")); err != nil {
+				fmt.Fprintf(i.out, "load failed: %v\n", err)
+			}
+
+		case line == "::pop":
+			i.Pop()
+
+		case strings.HasPrefix(line, "::show "):
+			if err := i.Show(strings.TrimPrefix(line, "::show ")); err != nil {
+				fmt.Fprintf(i.out, "show failed: %v\n", err)
+			}
+
+		case strings.HasPrefix(line, "?"):
+			if err := i.QueryInteractive(strings.TrimPrefix(line, "?")); err != nil {
+				fmt.Fprintf(i.out, "error evaluating query: %v\n", err)
+			}
+
+		default:
+			savedBuffer := i.buffer
+			clauseText := line
+			for !strings.HasSuffix(clauseText, ".") && !strings.HasSuffix(clauseText, "!") {
+				nextLine, err := nextLineWithPrompt(continuedPrompt)
+				if err != nil {
+					return err
+				}
+				clauseText = clauseText + nextLine
+			}
+
+			if err := i.Define(clauseText); err != nil {
+				fmt.Fprintf(i.out, "definition failed: %v\n", err)
+				i.buffer = savedBuffer
+			}
+		}
+	}
 }
 
 // Preload evaluates decls and clauses before any interactive evaluation takes place.

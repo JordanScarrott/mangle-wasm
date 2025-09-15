@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("mangle.wasm"), go.importObject).then((result) => {
+            go.run(result.instance);
+        });
+
+        function run() {
+            const query = document.getElementById("query").value;
+            const result = runMangle(query);
+            document.getElementById("output").innerText = result;
+        }
+    </script>
+</head>
+<body>
+    <h1>Mangle WASM</h1>
+    <textarea id="query" rows="10" cols="80"></textarea>
+    <br>
+    <button onClick="run()">Run</button>
+    <pre id="output"></pre>
+</body>
+</html>
