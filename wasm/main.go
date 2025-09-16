@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
-	"strings"
+	"encoding/json"
 	"syscall/js"
 
+	"github.com/google/mangle/ast"
 	"github.com/google/mangle/interpreter"
 )
 
@@ -25,19 +26,44 @@ func query(this js.Value, args []js.Value) interface{} {
 	if len(args) != 1 {
 		return "Invalid number of arguments"
 	}
-	query, err := i.ParseQuery(args[0].String())
+	parsedQuery, err := i.ParseQuery(args[0].String())
 	if err != nil {
 		return "Error: " + err.Error()
 	}
-	res, err := i.Query(query)
+
+	solutions, err := i.Query(parsedQuery)
 	if err != nil {
 		return "Error: " + err.Error()
 	}
-	var results []string
-	for _, fact := range res {
-		results = append(results, fact.String())
+
+	var results []map[string]string
+
+	for _, resultAtom := range solutions {
+		bindings := make(map[string]string)
+
+		for i, queryTerm := range parsedQuery.Args {
+			switch term := queryTerm.(type) {
+			case ast.Variable:
+				resultTerm := resultAtom.Args[i]
+				// FINAL CORRECTION: Call the .String() method on the variable struct.
+				bindings[term.String()] = resultTerm.String()
+			}
+		}
+		if len(bindings) > 0 {
+			results = append(results, bindings)
+		}
 	}
-	return strings.Join(results, "\n")
+
+	if len(results) == 0 && len(solutions) > 0 {
+		return "[{}]"
+	}
+
+	jsonResult, err := json.Marshal(results)
+	if err != nil {
+		return "Error: " + err.Error()
+	}
+
+	return string(jsonResult)
 }
 
 func main() {
